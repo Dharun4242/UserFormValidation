@@ -20,6 +20,7 @@ const UserForm = () => {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(Schema),
@@ -29,6 +30,8 @@ const UserForm = () => {
 
   const onSubmit = (data) => {
     console.log("Form Data", data);
+    alert("Submitted Successfully");
+    reset();
   };
 
   const skillSelected = watch("skills");
