@@ -3,6 +3,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
+
 const Schema = z.object({
   fullName: z.string().min(3, "FullName must be at least 3 Characters"),
   email: z.string().email("Invalid email"),
@@ -17,6 +20,19 @@ const Schema = z.object({
     .number()
     .min(1, "Minimun 1 Hour required")
     .max(60, "Cannot exceed 60 Hours"),
+  bio: z.string().min(10, "Bio must be atleast 10 chracters"),
+  profileImage: z
+    .any()
+    .refine((file) => file && file.length > 0, "Profile image is required")
+    .refine(
+      (file) => file && file[0]?.size <= MAX_FILE_SIZE,
+      "Maximum file size is 2MB"
+    )
+    .refine(
+      (file) => file && ACCEPTED_IMAGE_TYPES.includes(file[0]?.type),
+      "Only JPEG or PNG images are allowed"
+    ),
+  newsletter: z.boolean().optional(),
 });
 
 const UserForm = () => {
@@ -264,6 +280,56 @@ const UserForm = () => {
                 {errors.avaliableHours.message}
               </p>
             )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="bio"
+              className="block font-semibold text-gray-700 mb-1"
+            >
+              Bio
+            </label>
+            <textarea
+              id="bio"
+              {...register("bio")}
+              placeholder="Write Something about Yourself..."
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            {errors.bio && (
+              <p className="text-red-500 text-sm mt-1">{errors.bio.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="profileImage"
+              className="block font-semibold text-gray-700 mb-1"
+            >
+              Profile Image
+            </label>
+            <input
+              type="file"
+              id="profileImage"
+              {...register("profileimage")}
+              accept="image/jpeg, imahe/png"
+              className="w-full"
+            />
+            {errors.profileImage && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.profileImage.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="flex items-center space-x-2 font-semibold text-gray-700">
+              <input
+                type="checkbox"
+                {...register("newsletter")}
+                className="h-4 w-4 text-indigo-500 focus:ring-indigo-400 border-gray-300 rounded"
+              />
+              <span>Subscribe to Newsletter</span>
+            </label>
           </div>
 
           <button
