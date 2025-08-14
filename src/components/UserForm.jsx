@@ -312,7 +312,7 @@ const UserForm = () => {
               id="profileImage"
               {...register("profileImage")}
               accept="image/jpeg, imahe/png"
-              className="w-full"
+              className="block w-full text-sm file:mr-4 file:rounded-xl file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-indigo-700 hover:file:bg-indigo-100"
             />
             {errors.profileImage && (
               <p className="text-red-500 text-sm mt-1">
@@ -322,14 +322,23 @@ const UserForm = () => {
           </div>
 
           <div>
-            <label className="flex items-center space-x-2 font-semibold text-gray-700">
-              <input
-                type="checkbox"
-                {...register("newsletter")}
-                className="h-4 w-4 text-indigo-500 focus:ring-indigo-400 border-gray-300 rounded"
-              />
-              <span>Subscribe to Newsletter</span>
+            <label className="block font-semibold text-gray-700 mb-2">
+              Subscribe to Newsletter
             </label>
+
+            <button
+              type="button"
+              onClick={() => setValue("newsletter", !watch("newsletter"))}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+                watch("newsletter") ? "bg-indigo-500" : "bg-gray-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${
+                  watch("newsletter") ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
           </div>
 
           <button
