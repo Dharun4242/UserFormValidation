@@ -24,7 +24,15 @@ const Schema = z.object({
   skills: z.array(z.string()).min(1, "Select atleast one skill"),
   experience: z.string().min(1, "Select your experience level"),
   remote: z.boolean().optional(),
-  startDate: z.string().min(1, "Start Date is required"),
+  startDate: z.string().refine(
+    (date) => {
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return selectedDate > today;
+    },
+    { message: "Start date must be a future date" }
+  ),
   avaliableHours: z
     .number()
     .min(1, "Minimun 1 Hour required")
