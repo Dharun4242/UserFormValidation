@@ -310,7 +310,7 @@ const UserForm = () => {
             <input
               type="file"
               id="profileImage"
-              {...register("profileimage")}
+              {...register("profileImage")}
               accept="image/jpeg, imahe/png"
               className="w-full"
             />
