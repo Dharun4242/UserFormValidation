@@ -9,7 +9,16 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
 const Schema = z.object({
   fullName: z.string().min(3, "FullName must be at least 3 Characters"),
   email: z.string().email("Invalid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least 1 UpperCase letter")
+    .regex(/[a-z]/, "Password must contain at least 1 lowerCase letter")
+    .regex(/\d/, "Password must contain at least one number")
+    .regex(
+      /[!@#$%^&*(),.?:{}|<>]/,
+      "Password must conatin at least 1 special characters"
+    ),
   age: z.coerce.number().min(18, "Must be at least 18"),
   role: z.string().min(1, "Please Select a Role"),
   skills: z.array(z.string()).min(1, "Select atleast one skill"),
@@ -45,7 +54,7 @@ const UserForm = () => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(Schema),
-    defaultValues: { skills: [], remote: false },
+    defaultValues: { skills: [], remote: false, avaliableHours: 0 },
     mode: "onChange",
   });
 
@@ -266,7 +275,7 @@ const UserForm = () => {
               htmlFor="avaliableHours"
               className="block font-semibold text-gray-700 mb-1"
             >
-              Avaliable Hours Per Week: {watch("avaliableHours") || 1} hrs
+              Avaliable Hours Per Week: {watch("avaliableHours") ?? 1} hrs
             </label>
             <input
               type="range"
@@ -311,7 +320,7 @@ const UserForm = () => {
               type="file"
               id="profileImage"
               {...register("profileImage")}
-              accept="image/jpeg, imahe/png"
+              accept="image/jpeg, image/png"
               className="block w-full text-sm file:mr-4 file:rounded-xl file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-indigo-700 hover:file:bg-indigo-100"
             />
             {errors.profileImage && (
