@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -6,51 +6,76 @@ import { useForm } from "react-hook-form";
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
 
-const Schema = z.object({
-  fullName: z.string().min(3, "FullName must be at least 3 Characters"),
-  email: z.string().email("Invalid email"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least 1 UpperCase letter")
-    .regex(/[a-z]/, "Password must contain at least 1 lowerCase letter")
-    .regex(/\d/, "Password must contain at least one number")
-    .regex(
-      /[!@#$%^&*(),.?:{}|<>]/,
-      "Password must conatin at least 1 special characters"
+const Schema = z
+  .object({
+    fullName: z.string().min(3, "FullName must be at least 3 Characters"),
+    email: z.string().email("Invalid email"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain at least 1 UpperCase letter")
+      .regex(/[a-z]/, "Password must contain at least 1 lowerCase letter")
+      .regex(/\d/, "Password must contain at least one number")
+      .regex(
+        /[!@#$%^&*(),.?:{}|<>]/,
+        "Password must conatin at least 1 special characters"
+      ),
+    age: z.coerce.number().min(18, "Must be at least 18"),
+    role: z.string().min(1, "Please Select a Role"),
+    otherRole: z.string().optional(), // required only if role is Other
+    skills: z.array(z.string()).min(1, "Select atleast one skill"),
+    otherSkill: z.string().optional(), // required only if skills include Other
+    experience: z.string().min(1, "Select your experience level"),
+    remote: z.boolean().optional(),
+    startDate: z.string().refine(
+      (date) => {
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return selectedDate > today;
+      },
+      { message: "Start date must be a future date" }
     ),
-  age: z.coerce.number().min(18, "Must be at least 18"),
-  role: z.string().min(1, "Please Select a Role"),
-  skills: z.array(z.string()).min(1, "Select atleast one skill"),
-  experience: z.string().min(1, "Select your experience level"),
-  remote: z.boolean().optional(),
-  startDate: z.string().refine(
-    (date) => {
-      const selectedDate = new Date(date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return selectedDate > today;
-    },
-    { message: "Start date must be a future date" }
-  ),
-  avaliableHours: z
-    .number()
-    .min(1, "Minimun 1 Hour required")
-    .max(60, "Cannot exceed 60 Hours"),
-  bio: z.string().min(10, "Bio must be atleast 10 chracters"),
-  profileImage: z
-    .any()
-    .refine((file) => file && file.length > 0, "Profile image is required")
-    .refine(
-      (file) => file && file[0]?.size <= MAX_FILE_SIZE,
-      "Maximum file size is 2MB"
-    )
-    .refine(
-      (file) => file && ACCEPTED_IMAGE_TYPES.includes(file[0]?.type),
-      "Only JPEG or PNG images are allowed"
-    ),
-  newsletter: z.boolean().optional(),
-});
+    avaliableHours: z
+      .number()
+      .min(1, "Minimun 1 Hour required")
+      .max(60, "Cannot exceed 60 Hours"),
+    bio: z.string().min(10, "Bio must be atleast 10 chracters"),
+    profileImage: z
+      .any()
+      .refine((file) => file && file.length > 0, "Profile image is required")
+      .refine(
+        (file) => file && file[0]?.size <= MAX_FILE_SIZE,
+        "Maximum file size is 2MB"
+      )
+      .refine(
+        (file) => file && ACCEPTED_IMAGE_TYPES.includes(file[0]?.type),
+        "Only JPEG or PNG images are allowed"
+      ),
+    newsletter: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.role === "Other" &&
+      (!data.otherRole || data.otherRole.trim() === "")
+    ) {
+      ctx.addIssue({
+        path: ["otherRole"],
+        message: "Please enter your Role",
+        code: z.ZodIssueCode.custom,
+      });
+    }
+    if (
+      data.skills.includes("Other") &&
+      (!data.otherSkill || data.otherSkill.trim() === "")
+    ) {
+      ctx.addIssue({
+        path: ["otherSkill"],
+        message: "Please enter your Skill",
+        code: z.ZodIssueCode.custom,
+      });
+    }
+  });
 
 const UserForm = () => {
   const {
@@ -66,19 +91,37 @@ const UserForm = () => {
     mode: "onChange",
   });
 
+  const [otherRole, setOtherRole] = useState("");
+  const [otherSkill, setOtherSkill] = useState("");
+
   const onSubmit = (data) => {
     console.log("Form Data", data);
     alert("Submitted Successfully");
     reset();
+    setOtherRole("");
+    setOtherSkill("");
   };
 
   const skillSelected = watch("skills");
 
   const toggleSkill = (skill) => {
-    const updatedSkills = skillSelected.includes(skill)
-      ? skillSelected.filter((s) => s !== skill)
-      : [...skillSelected, skill];
-    setValue("skills", updatedSkills);
+    if (skill === "Other") {
+      if (skillSelected.includes("Other")) {
+        setValue(
+          "skills",
+          skillSelected.filter((s) => s !== "Other")
+        );
+        setOtherSkill("");
+        setValue("otherSkill", "");
+      } else {
+        setValue("skills", [...skillSelected, "Other"]);
+      }
+    } else {
+      const updatedSkills = skillSelected.includes(skill)
+        ? skillSelected.filter((s) => s !== skill)
+        : [...skillSelected, skill];
+      setValue("skills", updatedSkills);
+    }
   };
 
   return (
@@ -181,6 +224,13 @@ const UserForm = () => {
             <select
               {...register("role")}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              onChange={(e) => {
+                setValue("role", e.target.value);
+                if (e.target.value !== "Other") {
+                  setOtherRole("");
+                  setValue("otherRole", "");
+                }
+              }}
             >
               <option value="">Select Role</option>
               <option value="Developer">Developer</option>
@@ -188,8 +238,25 @@ const UserForm = () => {
               <option value="Writer">Writer</option>
               <option value="Other">Other</option>
             </select>
+            {watch("role") === "Other" && (
+              <input
+                type="text"
+                placeholder="Enter other role"
+                value={otherRole}
+                onChange={(e) => {
+                  setOtherRole(e.target.value);
+                  setValue("otherRole", e.target.value);
+                }}
+                className="w-full mt-2 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            )}
             {errors.role && (
               <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>
+            )}
+            {errors.otherRole && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.otherRole.message}
+              </p>
             )}
           </div>
 
@@ -201,21 +268,40 @@ const UserForm = () => {
               Skills
             </label>
             <div className="flex flex-wrap gap-4">
-              {["React", "Node.js", "UI-Design", "Python"].map((skill) => (
-                <label key={skill} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={skillSelected.includes(skill)}
-                    onChange={() => toggleSkill(skill)}
-                    className="h-4 w-4 text-indigo-500 focus:ring-indigo-400 border-gray-300 rounded"
-                  />
-                  <span>{skill}</span>
-                </label>
-              ))}
+              {["React", "Node.js", "UI-Design", "Python", "Other"].map(
+                (skill) => (
+                  <label key={skill} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={skillSelected.includes(skill)}
+                      onChange={() => toggleSkill(skill)}
+                      className="h-4 w-4 text-indigo-500 focus:ring-indigo-400 border-gray-300 rounded"
+                    />
+                    <span>{skill}</span>
+                  </label>
+                )
+              )}
             </div>
+            {skillSelected.includes("Other") && (
+              <input
+                type="text"
+                placeholder="Enter other skill"
+                value={otherSkill}
+                onChange={(e) => {
+                  setOtherSkill(e.target.value);
+                  setValue("otherSkill", e.target.value);
+                }}
+                className="w-full mt-2 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            )}
             {errors.skills && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.skills.message}
+              </p>
+            )}
+            {errors.otherSkill && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.otherSkill.message}
               </p>
             )}
           </div>
@@ -257,6 +343,7 @@ const UserForm = () => {
               <span>Available for Remote Work</span>
             </label>
           </div>
+
           <div>
             <label
               htmlFor="startDate"
@@ -269,10 +356,9 @@ const UserForm = () => {
               id="startDate"
               {...register("startDate")}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            ></input>
+            />
             {errors.startDate && (
               <p className="text-red-500 text-sm mt-1">
-                {" "}
                 {errors.startDate.message}
               </p>
             )}
@@ -291,7 +377,7 @@ const UserForm = () => {
               max="60"
               {...register("avaliableHours", { valueAsNumber: true })}
               className="w-full"
-            ></input>
+            />
             {errors.avaliableHours && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.avaliableHours.message}
@@ -342,7 +428,6 @@ const UserForm = () => {
             <label className="block font-semibold text-gray-700 mb-2">
               Subscribe to Newsletter
             </label>
-
             <button
               type="button"
               onClick={() => setValue("newsletter", !watch("newsletter"))}
