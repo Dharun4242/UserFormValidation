@@ -12,6 +12,11 @@ const Schema = z.object({
   skills: z.array(z.string()).min(1, "Select atleast one skill"),
   experience: z.string().min(1, "Select your experience level"),
   remote: z.boolean().optional(),
+  startDate: z.string().min(1, "Start Date is required"),
+  avaliableHours: z
+    .number()
+    .min(1, "Minimun 1 Hour required")
+    .max(60, "Cannot exceed 60 Hours"),
 });
 
 const UserForm = () => {
@@ -218,6 +223,47 @@ const UserForm = () => {
               />
               <span>Available for Remote Work</span>
             </label>
+          </div>
+          <div>
+            <label
+              htmlFor="startDate"
+              className="block font-semibold text-gray-700 mb-1"
+            >
+              Start Date
+            </label>
+            <input
+              type="date"
+              id="startDate"
+              {...register("startDate")}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            ></input>
+            {errors.startDate && (
+              <p className="text-red-500 text-sm mt-1">
+                {" "}
+                {errors.startDate.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="avaliableHours"
+              className="block font-semibold text-gray-700 mb-1"
+            >
+              Avaliable Hours Per Week: {watch("avaliableHours") || 1} hrs
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="60"
+              {...register("avaliableHours", { valueAsNumber: true })}
+              className="w-full"
+            ></input>
+            {errors.avaliableHours && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.avaliableHours.message}
+              </p>
+            )}
           </div>
 
           <button
