@@ -22,9 +22,9 @@ const Schema = z
       ),
     age: z.coerce.number().min(18, "Must be at least 18"),
     role: z.string().min(1, "Please Select a Role"),
-    otherRole: z.string().optional(), // required only if role is Other
+    otherRole: z.string().optional(), 
     skills: z.array(z.string()).min(1, "Select atleast one skill"),
-    otherSkill: z.string().optional(), // required only if skills include Other
+    otherSkill: z.string().optional(), 
     experience: z.string().min(1, "Select your experience level"),
     remote: z.boolean().optional(),
     startDate: z.string().refine(
